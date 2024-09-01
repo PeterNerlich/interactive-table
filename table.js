@@ -11,7 +11,6 @@ var Table = Table || (function Table(source) {
 
 	this.reload = () => {
 		return new Promise((res, rej) => {
-			console.log('DEBUG', this);
 			if (this._source === null) {
 				return rej('No source set');
 			} else if (typeof this._source === 'object') {
@@ -35,11 +34,6 @@ var Table = Table || (function Table(source) {
 						return rej(e);
 					}
 				};
-
-				// test data (for local use)
-				/*return res(JSON.parse(
-					'{"head":{"name":"Name","functions":"Functions","rep+":"Additional Responsibilities","contact":"Contact"},"entries":[{"name":"Peter Nerlich","functions":["LC Germany","UBFR","UBAM"],"resp+":["creator/maintainer of UBAM GitHub"],"contact":{"telegram":"@peternerlich","email":"peter.nerlich+ubports@googlemail.com"}},{"name":"Wayne","functions":["LC Korea","UBFR","UBAM","(many more)"],"resp+":["does potentially everything in/around the community"],"contact":{"telegram":"@wayneoutthere"}},{"name":"Emanuele Sorce","functions":["LC Italy","UBFR","UBAM"],"resp+":[],"contact":{"telegram":"@TronFortyTwo"}},{"name":"Diogo Constantino","functions":["LC Portugal","UBAM"],"resp+":[],"contact":{"telegram":"@DiogoConstantino"}},{"name":"This","functions":["is"],"resp+":[],"contact":{"telegram":"@test"}}]}'
-				));*/
 			}
 		});
 	};
@@ -93,20 +87,17 @@ var Table = Table || (function Table(source) {
 					if (typeof this._entries[e].obj[t] === 'string') {
 						if (this._entries[e].obj[t].toLowerCase().indexOf(this.filter) > -1) {
 							this._entries[e].el.classList.remove('hidden');
-						//	console.log('showing', this._entries[e].obj.name, ':', this.filter, 'in', this._entries[e].obj[t]);
 							continue entr;
 						}
 					} else if (typeof this._entries[e].obj[t] === 'object') {
 						for (let i in this._entries[e].obj[t]) {
 							if (this._entries[e].obj[t][i].toLowerCase().indexOf(this.filter) > -1) {
 								this._entries[e].el.classList.remove('hidden');
-							//	console.log('showing', this._entries[e].obj.name, ':', this.filter, 'in', this._entries[e].obj[t][i]);
 								continue entr;
 							}
 						}
 					}
 				}
-			//	console.log('hiding', this._entries[e].obj.name, ':', this.filter, '!in', this._entries[e].obj);
 				this._entries[e].el.classList.add('hidden');
 				continue entr;
 			}
@@ -122,7 +113,6 @@ var Table = Table || (function Table(source) {
 							//  if no match is found, hide and continue with the next entry
 							if (this._entries[e].obj[this.filter[f].tag].toLowerCase().indexOf(this.filter[f].value) < 0) {
 								this._entries[e].el.classList.add('hidden');
-							//	console.log('hiding', this._entries[e].obj.name, ':', this.filter[f], '!in', this._entries[e].obj[this.filter[f].tag].toLowerCase());
 								continue entr;
 							}
 						} else if (typeof this._entries[e].obj[this.filter[f].tag] === 'object') {
@@ -136,7 +126,6 @@ var Table = Table || (function Table(source) {
 										continue vals;
 									}
 								}
-							//	console.log('hiding', this._entries[e].obj.name, ':', {tag: this.filter[f].tag, value: vals}, v, '!in', this._entries[e].obj[this.filter[f].tag].map(e => {return e.toLowerCase();}));
 								this._entries[e].el.classList.add('hidden');
 								continue entr;
 							}
@@ -146,7 +135,6 @@ var Table = Table || (function Table(source) {
 						continue entr;
 					}
 				}
-			//	console.log('showing', this._entries[e].obj.name, ':', this.filter, 'matches', this._entries[e].obj);
 				this._entries[e].el.classList.remove('hidden');
 			}
 		}
@@ -154,15 +142,13 @@ var Table = Table || (function Table(source) {
 		//sort this._entries
 		if (this.sortAsc) {
 			this._entries.sort((a,b) => {
-				return a.obj[this.sortBy].toLowerCase() > b.obj[this.sortBy].toLowerCase();
+				return this.renderField(a.obj[this.sortBy]).toLowerCase() > this.renderField(b.obj[this.sortBy]).toLowerCase() ? 1 : -1;
 			});
 		} else {
 			this._entries.sort((a,b) => {
-				return a.obj[this.sortBy].toLowerCase() < b.obj[this.sortBy].toLowerCase();
+				return this.renderField(a.obj[this.sortBy]).toLowerCase() < this.renderField(b.obj[this.sortBy]).toLowerCase() ? 1 : -1;
 			});
 		}
-
-	//	console.log('sorted:', disp(this._entries));
 
 		//order table rows accordingly
 		this._element.tBodies[0].insertBefore(this._entries[0].el, this._element.tBodies[0].children[0]);
@@ -247,21 +233,7 @@ var Table = Table || (function Table(source) {
 				let brow = document.createElement('tr');
 				for (let i in this._json.entries[e]) {
 					let td = document.createElement('td');
-					td.innerHTML = (e => {
-						if (typeof e === 'object') {
-							if (typeof e.length === 'number') {
-								return e.join(', ');
-							} else {
-								let o = '';
-								for (let k in e) {
-									o += '<em>'+k+':</em> '+e[k]+'<br>';
-								}
-								return o;
-							}
-						} else {
-							return e;
-						}
-					})(this._json.entries[e][i]);
+					td.innerHTML = this.renderField(this._json.entries[e][i]);
 					brow.appendChild(td);
 				}
 				this._entries.push({obj: this._json.entries[e], el: brow});
@@ -273,6 +245,22 @@ var Table = Table || (function Table(source) {
 
 			return res(this._element);
 		});
+	};
+
+	this.renderField = e => {
+		if (typeof e === 'object') {
+			if (typeof e.length === 'number') {
+				return e.join(', ');
+			} else {
+				let o = '';
+				for (let k in e) {
+					o += '<em>'+k+':</em> '+e[k]+'<br>';
+				}
+				return o;
+			}
+		} else {
+			return e;
+		}
 	};
 
 	this.create = () => {
